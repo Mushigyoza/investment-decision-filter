@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>長期投資決策過濾器 (優化版)</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --danger: #e74c3c;
+            --success: #27ae60;
+            --bg: #f8f9fa;
+            --highlight-bg: #fff3cd; /* 用來標示被加碼的項目 */
+        }
+        body {
+            font-family: "Microsoft JhengHei", -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg);
+            color: var(--primary);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3 { margin-top: 0; }
+        h1 { text-align: center; color: var(--primary); border-bottom: 2px solid #eee; padding-bottom: 15px; }
+        
+        /* Input Section */
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        @media (max-width: 600px) { .input-group { grid-template-columns: 1fr; } }
+        
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.95rem;}
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        select { background-color: #fff; cursor: pointer; }
+
+        .new-fund-area {
+            grid-column: span 2;
+            background-color: #e8f4fc;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #bde0fe;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        @media (max-width: 600px) { .new-fund-area { grid-template-columns: 1fr; } }
+
+        .btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+        .btn:hover { background-color: #2980b9; }
+
+        /* Dashboard Section */
+        #dashboard {
+            background-color: #eef2f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .target-check { font-size: 0.85em; color: #666; margin-top: 2px;}
+        
+        .dash-item {
+            padding: 10px;
+            border-radius: 6px;
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .dash-item.active-target {
+            background-color: var(--highlight-bg);
+            border: 1px solid #ffeeba;
+        }
+
+        /* Quiz Section */
+        #quiz-section { display: none; margin-top: 30px; }
+        .question-card {
+            border: 1px solid #eee;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            background: #fff;
+        }
+        .question-card.danger-zone { border-left: 5px solid var(--danger); }
+        .question-card h3 { font-size: 1.1rem; margin-bottom: 15px; }
+        
+        .options { display: flex; flex-direction: column; gap: 10px; }
+        .radio-label {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: #fdfdfd;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .radio-label:hover { background: #f0f8ff; }
+        input[type="radio"] { margin-right: 10px; transform: scale(1.2); }
+
+        /* Result Section */
+        #final-result {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            z-index: 100;
+        }
+        .result-content { max-width: 800px; margin: 0 auto; }
+        .res-stop { background-color: #ffebee; color: #c0392b; border-top: 4px solid var(--danger); }
+        .res-go { background-color: #e8f5e9; color: #27ae60; border-top: 4px solid var(--success); }
+        .res-title { font-size: 1.5rem; font-weight: bold; margin-bottom: 5px; }
+
+        .hidden { display: none; }
+        .highlight { color: var(--accent); font-weight: bold; font-size: 1.1em; }
+        .diff-indicator { font-size: 0.8em; color: var(--success); margin-left: 5px; }
+        
+        .quote {
+            text-align: center;
+            font-style: italic;
+            color: #7f8c8d;
+            margin-top: 40px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>投資決策過濾器 <span style="font-size:0.6em; color:#888;">(交易試算版)</span></h1>
+    <p style="text-align: center; color: #666;">輸入現有庫存與計畫投入金額，系統將計算「交易後」的佔比並進行風險檢查。</p>
+
+    <div id="input-section">
+        <h3>1. 輸入資產現況 (TWD)</h3>
+        <div class="input-group">
+            <div>
+                <label>006208 庫存金額</label>
+                <input type="number" id="amt_006208" placeholder="0" oninput="calculateTotal()">
+            </div>
+            <div>
+                <label>VT 庫存金額</label>
+                <input type="number" id="amt_vt" placeholder="0" oninput="calculateTotal()">
+            </div>
+            <div>
+                <label>0052 庫存金額</label>
+                <input type="number" id="amt_0052" placeholder="0" oninput="calculateTotal()">
+            </div>
+            <div>
+                <label>其他 (如 2887) 庫存金額</label>
+                <input type="number" id="amt_other" placeholder="0" oninput="calculateTotal()">
+            </div>
+            
+            <div class="new-fund-area">
+                <div>
+                    <label style="color: var(--accent);">本次預計投入金額</label>
+                    <input type="number" id="amt_new" placeholder="打算投入多少？" oninput="calculateTotal()">
+                </div>
+                <div>
+                    <label style="color: var(--accent);">這筆錢要買哪一支？</label>
+                    <select id="target_stock" onchange="calculateTotal()">
+                        <option value="">-- 請選擇 --</option>
+                        <option value="006208">006208 (大盤)</option>
+                        <option value="vt">VT (全球)</option>
+                        <option value="0052">0052 (科技)</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div id="dashboard">
+            <h4 style="margin:0 0 10px 0;">試算儀表板：交易後預估佔比</h4>
+            <div class="stat-row"><strong>交易後總資產:</strong> <span id="total_assets">0</span></div>
+            <hr style="border:0; border-top:1px dashed #ccc;">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size: 0.9rem;">
+                
+                <div id="box_006208" class="dash-item">
+                    006208: <span id="pct_006208" class="highlight">0%</span>
+                    <span id="diff_006208"></span>
+                    <div class="target-check">目標: 40-50%</div>
+                </div>
+                
+                <div id="box_vt" class="dash-item">
+                    VT: <span id="pct_vt" class="highlight">0%</span>
+                    <span id="diff_vt"></span>
+                    <div class="target-check">目標: 25-35%</div>
+                </div>
+                
+                <div id="box_0052" class="dash-item">
+                    0052: <span id="pct_0052" class="highlight">0%</span>
+                    <span id="diff_0052"></span>
+                    <div class="target-check">目標: 15-25%</div>
+                </div>
+                
+                <div id="box_other" class="dash-item">
+                    其他: <span id="pct_other" class="highlight">0%</span>
+                    <span id="diff_other"></span>
+                    <div class="target-check">目標: ≤10%</div>
+                </div>
+            </div>
+            <p style="font-size:0.8em; color:#888; margin-top:10px; text-align:right;">*黃底項目為本次加碼標的</p>
+        </div>
+
+        <button class="btn" onclick="startQuiz()">確認比例，開始決策檢查</button>
+    </div>
+
+    <div id="quiz-section">
+        <h2>決策靈魂拷問</h2>
+        
+        <div class="question-card" id="q1">
+            <h3>一、決策分類：你的動機是什麼？</h3>
+            <div class="options">
+                <label class="radio-label"><input type="radio" name="q1" value="valid" onchange="checkLogic()"> A/B/C：核心配置調整 / 再平衡 / 新增資金</label>
+                <label class="radio-label"><input type="radio" name="q1" value="stop_72" onchange="checkLogic()"> D：衝動 / 情緒 / 看到新聞想動</label>
+            </div>
+        </div>
+
+        <div class="question-card danger-zone" id="q_impulse">
+            <h3>強制停止規則：你是否「很想現在立刻」做？</h3>
+            <div class="options">
+                <label class="radio-label"><input type="radio" name="q_impulse" value="stop_now" onchange="checkLogic()"> 是，我現在就要做！</label>
+                <label class="radio-label"><input type="radio" name="q_impulse" value="pass" onchange="checkLogic()"> 否，我可以冷靜等待，按紀律執行</label>
+            </div>
+        </div>
+
+        <div class="question-card" id="q2">
+            <h3>二、長期資產配置：做完之後風險變？</h3>
+            <div class="options">
+                <label class="radio-label"><input type="radio" name="q2" value="pass" onchange="checkLogic()"> 分散度更好 / 風險變小 (符合長期配置)</label>
+                <label class="radio-label"><input type="radio" name="q2" value="warn" onchange="checkLogic()"> 更加集中 / 風險變大 (高度可疑)</label>
+            </div>
+        </div>
+
+        <div class="question-card" id="q3">
+            <h3>三、比例檢查 (請參考上方儀表板)</h3>
+            <p style="font-size: 0.9em; color: #666;">根據上方的試算結果，這筆交易是否讓配置更接近目標？</p>
+            <div class="options">
+                <label class="radio-label"><input type="radio" name="q3" value="pass" onchange="checkLogic()"> 是，修正偏移 / 維持平衡</label>
+                <label class="radio-label"><input type="radio" name="q3" value="stop_ratio" onchange="checkLogic()"> 否，單純因為覺得它會漲想加碼 (追高)</label>
+            </div>
+        </div>
+
+        <div class="question-card" id="q4">
+            <h3>四、心理壓力測試：如果明天跌 30%...</h3>
+            <div class="options">
+                <label class="radio-label"><input type="radio" name="q4" value="pass" onchange="checkLogic()"> 我很淡定，這是預期內的波動</label>
+                <label class="radio-label"><input type="radio" name="q4" value="stop_sleep" onchange="checkLogic()"> 我會睡不著 / 焦慮</label>
+            </div>
+        </div>
+
+        <div class="question-card danger-zone" id="q5">
+            <h3>五、最壞情境：連跌 3 年，帳面 -50%</h3>
+            <p>這會影響你的生活嗎？你會被迫賣出嗎？</p>
+            <div class="options">
+                <label class="radio-label"><input type="radio" name="q5" value="stop_risk" onchange="checkLogic()"> 會 (影響生活 / 被迫賣出)</label>
+                <label class="radio-label"><input type="radio" name="q5" value="pass" onchange="checkLogic()"> 不會，生活無虞且能繼續投入</label>
+            </div>
+        </div>
+
+        <div class="question-card" id="q6">
+            <h3>六、時間邏輯：你打算持有多久？</h3>
+            <div class="options">
+                <label class="radio-label"><input type="radio" name="q6" value="pass" onchange="checkLogic()"> ≥ 10 年 (投資)</label>
+                <label class="radio-label"><input type="radio" name="q6" value="stop_speculate" onchange="checkLogic()"> 1～2 年 (投機/賭博)</label>
+            </div>
+        </div>
+
+        <div class="question-card" id="q7">
+            <h3>七、替代方案：如果「什麼都不做」會怎樣？</h3>
+            <div class="options">
+                <label class="radio-label"><input type="radio" name="q7" value="pass" onchange="checkLogic()"> 組合會失控 / 風險會爆炸 (必須做)</label>
+                <label class="radio-label"><input type="radio" name="q7" value="suggest_nothing" onchange="checkLogic()"> 其實沒差，風險可控</label>
+            </div>
+        </div>
+        
+         <div class="question-card" id="q9">
+            <h3>八、未來的自己：5 年後回頭看這個決定...</h3>
+            <div class="options">
+                <label class="radio-label"><input type="radio" name="q9" value="pass" onchange="checkLogic()"> 看起來是理性與紀律</label>
+                <label class="radio-label"><input type="radio" name="q9" value="stop_emotion" onchange="checkLogic()"> 看起來是情緒與衝動</label>
+            </div>
+        </div>
+
+        <div class="question-card" id="q10">
+            <h3>九、終極檢查</h3>
+            <p>如果未來 10 年都「只能照這套邏輯做決策」，你會安心嗎？</p>
+            <div class="options">
+                <label class="radio-label"><input type="radio" name="q10" value="pass" onchange="checkLogic()"> 會，我可以執行</label>
+                <label class="radio-label"><input type="radio" name="q10" value="stop_trust" onchange="checkLogic()"> 不會</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="quote">
+        "投資裡，80% 的時間你應該在「避免做錯」，而不是「努力做對」。"
+    </div>
+    
+    <div style="height: 100px;"></div> </div>
+
+<div id="final-result">
+    <div class="result-content">
+        <div class="res-title" id="res-title"></div>
+        <div id="res-desc"></div>
+    </div>
+</div>
+
+<script>
+    function calculateTotal() {
+        // 1. 獲取庫存
+        const current_6208 = parseFloat(document.getElementById('amt_006208').value) || 0;
+        const current_vt = parseFloat(document.getElementById('amt_vt').value) || 0;
+        const current_0052 = parseFloat(document.getElementById('amt_0052').value) || 0;
+        const current_other = parseFloat(document.getElementById('amt_other').value) || 0;
+        
+        // 2. 獲取新增資金與目標
+        const new_fund = parseFloat(document.getElementById('amt_new').value) || 0;
+        const target = document.getElementById('target_stock').value;
+
+        // 3. 計算預估後的個別資產價值
+        // 如果選了該目標，就加上新資金，否則維持原樣
+        const final_6208 = current_6208 + (target === '006208' ? new_fund : 0);
+        const final_vt = current_vt + (target === 'vt' ? new_fund : 0);
+        const final_0052 = current_0052 + (target === '0052' ? new_fund : 0);
+        const final_other = current_other + (target === 'other' ? new_fund : 0);
+
+        // 4. 計算交易後總資產
+        const totalWithNew = final_6208 + final_vt + final_0052 + final_other;
+
+        document.getElementById('total_assets').innerText = totalWithNew.toLocaleString();
+
+        if (totalWithNew > 0) {
+            updatePct('pct_006208', final_6208, totalWithNew, 'box_006208', target === '006208');
+            updatePct('pct_vt', final_vt, totalWithNew, 'box_vt', target === 'vt');
+            updatePct('pct_0052', final_0052, totalWithNew, 'box_0052', target === '0052');
+            updatePct('pct_other', final_other, totalWithNew, 'box_other', target === 'other');
+            document.getElementById('dashboard').style.display = 'block';
+        }
+    }
+
+    function updatePct(id, val, total, boxId, isActive) {
+        const pct = (val / total * 100).toFixed(1);
+        const el = document.getElementById(id);
+        const box = document.getElementById(boxId);
+        
+        el.innerText = pct + "%";
+
+        // 視覺化：如果是這次加碼的目標，加上背景色與箭頭
+        if (isActive) {
+            box.classList.add('active-target');
+            // 可以加上一個上升圖示
+            if(!el.innerHTML.includes('⬆')) {
+                 // 這裡邏輯簡單處理，只要是 active 就不特別重繪，CSS class 處理背景即可
+            }
+        } else {
+            box.classList.remove('active-target');
+        }
+    }
+
+    function startQuiz() {
+        const total = parseFloat(document.getElementById('total_assets').innerText.replace(/,/g, '')) || 0;
+        
+        if (total === 0) {
+            alert("請先輸入資產金額");
+            return;
+        }
+
+        document.getElementById('quiz-section').style.display = 'block';
+        document.getElementById('quiz-section').scrollIntoView({ behavior: 'smooth' });
+        checkLogic(); // Initialize state
+    }
+
+    function checkLogic() {
+        const getVal = (name) => {
+            const el = document.querySelector(`input[name="${name}"]:checked`);
+            return el ? el.value : null;
+        };
+
+        const q1 = getVal('q1');
+        const q_impulse = getVal('q_impulse');
+        const q2 = getVal('q2');
+        const q3 = getVal('q3');
+        const q4 = getVal('q4');
+        const q5 = getVal('q5');
+        const q6 = getVal('q6');
+        const q7 = getVal('q7');
+        const q9 = getVal('q9');
+        const q10 = getVal('q10');
+
+        let status = "pending"; 
+        let message = "請依序回答上述問題...";
+        let title = "檢查中...";
+
+        if (q1 === 'stop_72') {
+            status = "stop"; title = "🛑 先暫停 72 小時"; message = "這是情緒衝動，請強制冷靜後再來。";
+        } else if (q_impulse === 'stop_now') {
+            status = "stop"; title = "🛑 立刻停止"; message = "如果這個決策你「很想現在立刻做」，那幾乎一定是壞決策。";
+        } else if (q2 === 'warn') {
+            status = "stop"; title = "⚠️ 高度可疑"; message = "資產變更集中、風險變大，這違反長期配置原則。";
+        } else if (q3 === 'stop_ratio') {
+            status = "stop"; title = "🛑 危險操作"; message = "你正在因為「覺得會漲」而偏離目標比例。";
+        } else if (q4 === 'stop_sleep') {
+            status = "stop"; title = "🛑 部位過大"; message = "如果明天跌 30% 會讓你睡不著，請不要執行。";
+        } else if (q5 === 'stop_risk') {
+            status = "stop"; title = "🛑 風險太大"; message = "最壞情況會影響生活，這筆交易絕對不能做。";
+        } else if (q6 === 'stop_speculate') {
+            status = "stop"; title = "🛑 請自負盈虧"; message = "這不是投資，這是投機賭博。";
+        } else if (q7 === 'suggest_nothing') {
+            status = "success"; title = "⏸️ 最好的選擇就是不動"; message = "如果「不做事也沒差」，那就省下交易成本與心力吧。";
+        } else if (q9 === 'stop_emotion') {
+            status = "stop"; title = "🛑 情緒與衝動"; message = "未來的你不會感謝現在的衝動。";
+        } else if (q10 === 'stop_trust') {
+            status = "stop"; title = "🛑 不要執行"; message = "如果這套邏輯無法讓你安心長期執行，現在就不要做。";
+        } else if (q1 && q_impulse && q2 && q3 && q4 && q5 && q6 && q7 && q9 && q10) {
+            status = "success"; title = "✅ 通過檢查"; message = "這是一個理性的決策，可以執行！";
+        }
+
+        const resDiv = document.getElementById('final-result');
+        const titleDiv = document.getElementById('res-title');
+        const descDiv = document.getElementById('res-desc');
+
+        if (status !== 'pending') {
+            resDiv.style.display = 'block';
+            resDiv.className = (status === 'stop' || status === 'warn') ? 'res-stop' : 'res-go';
+            titleDiv.innerText = title;
+            descDiv.innerText = message;
+        } else {
+            resDiv.style.display = 'none';
+        }
+    }
+</script>
+
+</body>
+</html>
