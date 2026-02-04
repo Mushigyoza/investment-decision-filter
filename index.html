@@ -3,136 +3,191 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>長期投資組合過濾器</title>
+    <title>長期投資過濾器</title>
     <style>
-        :root {
-            --primary: #2c3e50;
-            --accent: #3498db;
-            --danger: #e74c3c;
-            --success: #27ae60;
-            --warning: #f39c12;
-            --bg: #f4f6f8;
+        /* --- 1. 自訂字體設定區 --- */
+        @font-face {
+            font-family: 'MyCustomFont';
+            src: url('KabaFont4.otf'); 
         }
+
+        :root {
+            --primary: #5f6c7b;       
+            --bg: #f4f1ea;            
+            --container-bg: #ffffff;  
+            --main-btn: #9d8189;      
+            --main-btn-hover: #8e737b;
+            --accent-blue: #a4b4b4;   
+            --status-over: #e5989b;   
+            --status-under: #e6b8a2;  
+            --status-good: #84a59d;   
+            --table-head: #e8e4dc;    
+            --border: #e0deda;
+        }
+
         body {
-            font-family: "Microsoft JhengHei", sans-serif;
+            font-family: 'MyCustomFont', "Microsoft JhengHei", "Heiti TC", sans-serif;
             background-color: var(--bg);
             color: var(--primary);
-            margin: 0; padding: 15px;
+            margin: 0; padding: 20px;
+            line-height: 1.6;
         }
+
         .container {
             max-width: 1000px;
             margin: 0 auto;
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            background: var(--container-bg);
+            padding: 30px;
+            border-radius: 20px; 
+            box-shadow: 0 10px 30px rgba(157, 129, 137, 0.1);
         }
-        h1 { text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
+
+        h1 { 
+            text-align: center; 
+            color: #6d597a; 
+            border-bottom: 2px dashed var(--border); 
+            padding-bottom: 20px; 
+            margin-bottom: 30px; 
+            font-weight: 800; 
+            letter-spacing: 2px;
+            font-size: 2.2em;
+        }
         
-        /* Dashboard Cards */
+        .total-banner {
+            background: #6d6875; 
+            color: #fff; 
+            padding: 20px; 
+            border-radius: 15px;
+            margin-bottom: 30px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+        }
+
         .dashboard {
             display: grid; 
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 15px; 
-            margin-bottom: 30px;
+            gap: 20px; 
+            margin-bottom: 40px;
         }
         .card { 
-            padding: 15px; 
-            border-radius: 8px; 
+            padding: 20px; 
+            border-radius: 15px; 
             background: #fff; 
-            border: 1px solid #eee;
-            border-left: 5px solid #ccc; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+            border: 1px solid var(--border);
+            border-left: 6px solid #ccc; 
+            transition: transform 0.2s;
         }
-        .card.over { border-left-color: var(--danger); background: #fff5f5; }
-        .card.under { border-left-color: var(--warning); background: #fff9f0; }
-        .card.good { border-left-color: var(--success); background: #f0fff4; }
-        .card h4 { margin: 0 0 5px 0; font-size: 0.95em; color: #555; display: flex; justify-content: space-between; }
-        .card .target-label { font-size: 0.8em; background: #eee; padding: 2px 6px; border-radius: 4px; }
-        .card .val { font-size: 1.4em; font-weight: bold; margin: 5px 0; }
-        .card .amt { font-size: 0.9em; color: #777; }
-        .card .status { font-size: 0.85em; margin-top: 5px; font-weight: bold; }
+        .card.over { border-left-color: var(--status-over); background: #fff5f5; }
+        .card.under { border-left-color: var(--status-under); background: #fffcf9; }
+        .card.good { border-left-color: var(--status-good); background: #f4f9f6; }
 
-        /* Table Styling */
-        .table-container { overflow-x: auto; }
+        .card .val { font-size: 1.8em; font-weight: bold; margin: 5px 0; color: #555; }
+        .card .status { font-size: 0.9em; margin-top: 8px; font-weight: bold; }
+
+        h3 { color: #6d597a; margin-top: 0; font-weight: 700; }
+        .table-container { 
+            overflow-x: auto; 
+            background: #fff; 
+            border-radius: 15px; 
+            border: 1px solid var(--border);
+            padding: 5px;
+        }
         table { width: 100%; border-collapse: collapse; min-width: 600px; }
-        th { background: #eef2f5; text-align: left; padding: 10px; font-size: 0.9em; }
-        td { padding: 8px; border-bottom: 1px solid #eee; }
+        th { background: var(--table-head); color: #666; text-align: left; padding: 15px; font-size: 0.9em; }
+        td { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; }
         
         input, select {
-            width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 1em;
+            width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; 
+            background: #fbfbfb; color: #555; font-family: inherit;
         }
-        input:focus, select:focus { outline: none; border-color: var(--accent); }
 
-        /* Buttons */
         .btn-add {
-            background: #eee; color: #333; border: 1px dashed #999; 
-            width: 100%; padding: 10px; margin-top: 10px; cursor: pointer; border-radius: 6px;
-        }
-        .btn-add:hover { background: #e0e0e0; }
-        
-        .btn-del {
-            background: #ffeded; color: var(--danger); border: none; 
-            padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em;
+            background: #f2e9e4; color: #7d6e6e; border: 1px dashed #d6ccc2; 
+            width: 100%; padding: 12px; margin-top: 15px; border-radius: 10px;
+            font-weight: 600; cursor: pointer; font-family: inherit;
         }
         
         .btn-main {
-            background: var(--accent); color: white; border: none; padding: 15px;
-            font-size: 1.2em; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 30px;
-            box-shadow: 0 4px 0 #2980b9; transition: transform 0.1s;
-        }
-        .btn-main:active { transform: translateY(4px); box-shadow: none; }
-
-        /* Total Assets Display */
-        .total-banner {
-            background: #2c3e50; color: white; padding: 15px; border-radius: 8px;
-            margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;
+            background: var(--main-btn); color: white; border: none; padding: 18px;
+            font-size: 1.2em; border-radius: 12px; cursor: pointer; width: 100%; 
+            margin-top: 40px; font-weight: bold; font-family: inherit;
         }
 
-        /* Quiz Section */
-        #quiz-section { display: none; margin-top: 40px; border-top: 2px dashed #ccc; padding-top: 20px; }
-        .q-item { background: #f9f9f9; padding: 15px; margin-bottom: 15px; border-radius: 6px; }
+        /* --- 2:8 比例優化區塊 --- */
+        #quiz-section { 
+            display: none; margin-top: 50px; 
+            border-top: 2px dashed var(--border); padding-top: 30px; 
+        }
+        .q-item { margin-bottom: 25px; }
+        .q-item p { font-weight: 800; color: #6d597a; margin-bottom: 15px; font-size: 1.1em; }
         
-        /* Result Bar */
-        #final-result {
-            display: none; position: fixed; bottom: 0; left: 0; width: 100%; padding: 20px;
-            text-align: center; z-index: 999; font-weight: bold; box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        .option-label {
+            display: flex;
+            align-items: center;
+            padding: 18px;
+            margin-bottom: 12px;
+            background: #f9f7f5;
+            border: 1px solid #eee;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
         }
-        .res-stop { background: #ffebee; color: #c0392b; border-top: 5px solid var(--danger); }
-        .res-go { background: #e8f5e9; color: #2e7d32; border-top: 5px solid var(--success); }
+        .option-label:hover { background: #fff; border-color: var(--main-btn); }
+        
+        /* 比例分配：左側圓圈佔 20%，右側文字佔 80% */
+        .option-label input[type="radio"] {
+            flex: 2; /* 比例 2 */
+            transform: scale(1.6);
+            margin: 0;
+            cursor: pointer;
+            accent-color: var(--main-btn);
+        }
+        .option-label span {
+            flex: 8; /* 比例 8 */
+            padding-left: 10px;
+            font-weight: 500;
+        }
+
+        #final-result {
+            display: none; position: fixed; bottom: 0; left: 0; width: 100%; padding: 25px;
+            text-align: center; z-index: 999; font-weight: bold; font-size: 1.1em; font-family: inherit;
+        }
+        .res-stop { background: #fae1dd; color: #b56576; border-top: 5px solid var(--status-over); }
+        .res-go { background: #e6f2ee; color: #4a7c59; border-top: 5px solid var(--status-good); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>長期投資組合過濾器</h1>
+    <h1>長期投資過濾器</h1>
 
     <div class="total-banner">
         <span>交易後預估總資產</span>
-        <span style="font-size: 1.5em; font-weight: bold;" id="total-assets">0</span>
+        <span style="font-size: 1.6em; font-weight: bold;" id="total-assets">$ 0</span>
     </div>
 
     <div class="dashboard">
         <div class="card" id="card-core">
-            <h4>核心配置 <span class="target-label">目標 40-50%</span></h4>
+            <h4>核心配置 <span class="target-label">40-50%</span></h4>
             <div class="val" id="pct-core">0%</div>
             <div class="amt" id="amt-core">$0</div>
             <div class="status" id="status-core">--</div>
         </div>
         <div class="card" id="card-global">
-            <h4>全球配置 <span class="target-label">目標 25-35%</span></h4>
+            <h4>全球配置 <span class="target-label">25-35%</span></h4>
             <div class="val" id="pct-global">0%</div>
             <div class="amt" id="amt-global">$0</div>
             <div class="status" id="status-global">--</div>
         </div>
         <div class="card" id="card-tech">
-            <h4>科技配置 <span class="target-label">目標 15-25%</span></h4>
+            <h4>科技配置 <span class="target-label">15-25%</span></h4>
             <div class="val" id="pct-tech">0%</div>
             <div class="amt" id="amt-tech">$0</div>
             <div class="status" id="status-tech">--</div>
         </div>
         <div class="card" id="card-other">
-            <h4>其他/個股 <span class="target-label">目標 ≤10%</span></h4>
+            <h4>其他/個股 <span class="target-label">≤10%</span></h4>
             <div class="val" id="pct-other">0%</div>
             <div class="amt" id="amt-other">$0</div>
             <div class="status" id="status-other">--</div>
@@ -144,16 +199,15 @@
         <table id="stock-table">
             <thead>
                 <tr>
-                    <th style="width: 15%;">代號/名稱</th>
+                    <th style="width: 15%;">代號</th>
                     <th style="width: 20%;">歸類</th>
                     <th style="width: 20%;">目前庫存</th>
-                    <th style="width: 20%;">加碼(+) / 賣出(-)</th>
+                    <th style="width: 20%;">加碼 / 賣出(-)</th>
                     <th style="width: 20%;">交易後金額</th>
                     <th style="width: 5%;"></th>
                 </tr>
             </thead>
-            <tbody id="table-body">
-                </tbody>
+            <tbody id="table-body"></tbody>
         </table>
     </div>
     <button class="btn-add" onclick="addRow()">+ 新增一列股票</button>
@@ -163,19 +217,37 @@
     <div id="quiz-section">
         <h3>最後一步：決策品質檢查</h3>
         <div class="q-item">
-            <p><strong>1. 這個交易動作的主要動機是？</strong></p>
-            <label><input type="radio" name="q1" value="pass" onchange="checkResult()"> 為了讓資產比例回到目標區間 (再平衡)</label><br>
-            <label><input type="radio" name="q1" value="stop" onchange="checkResult()"> 覺得某支股票要漲了想追，或是跌了想砍 (情緒)</label>
+            <p>1. 這個交易動作的主要動機是？</p>
+            <label class="option-label">
+                <input type="radio" name="q1" value="pass" onchange="checkResult()">
+                <span>為了讓資產比例回到目標區間 (再平衡)</span>
+            </label>
+            <label class="option-label">
+                <input type="radio" name="q1" value="stop" onchange="checkResult()">
+                <span>覺得某支股票要漲了想追，或是跌了想砍 (情緒)</span>
+            </label>
         </div>
         <div class="q-item">
-            <p><strong>2. 壓力測試：如果交易後明天跌 30%...</strong></p>
-            <label><input type="radio" name="q2" value="pass" onchange="checkResult()"> 我還能睡得著，生活不受影響</label><br>
-            <label><input type="radio" name="q2" value="stop" onchange="checkResult()"> 我會非常焦慮，甚至想停損</label>
+            <p>2. 壓力測試：如果交易後明天跌 30%...</p>
+            <label class="option-label">
+                <input type="radio" name="q2" value="pass" onchange="checkResult()">
+                <span>我還能睡得著，生活不受影響</span>
+            </label>
+            <label class="option-label">
+                <input type="radio" name="q2" value="stop" onchange="checkResult()">
+                <span>我會非常焦慮，甚至想停損</span>
+            </label>
         </div>
         <div class="q-item">
-            <p><strong>3. 這些錢的閒置時間？</strong></p>
-            <label><input type="radio" name="q3" value="pass" onchange="checkResult()"> 10 年以上不會用到</label><br>
-            <label><input type="radio" name="q3" value="stop" onchange="checkResult()"> 1-2 年內可能會拿來用</label>
+            <p>3. 這些錢的閒置時間？</p>
+            <label class="option-label">
+                <input type="radio" name="q3" value="pass" onchange="checkResult()">
+                <span>10 年以上不會用到</span>
+            </label>
+            <label class="option-label">
+                <input type="radio" name="q3" value="stop" onchange="checkResult()">
+                <span>1-2 年內可能會拿來用</span>
+            </label>
         </div>
     </div>
 </div>
@@ -185,151 +257,65 @@
 </div>
 
 <script>
-    // 定義規則
-    const RULES = {
-        core:   { min: 40, max: 50 },
-        global: { min: 25, max: 35 },
-        tech:   { min: 15, max: 25 },
-        other:  { min: 0,  max: 10 }
-    };
-
-    // 初始化：預設加入兩列方便使用者輸入
-    window.onload = function() {
-        addRow('006208', 'core');
-        addRow('VT', 'global');
-    };
+    // JS 邏輯維持不變
+    const RULES = { core: { min: 40, max: 50 }, global: { min: 25, max: 35 }, tech: { min: 15, max: 25 }, other: { min: 0, max: 10 } };
+    window.onload = function() { addRow('006208', 'core'); addRow('VT', 'global'); };
 
     function addRow(defaultName = '', defaultCat = 'core') {
         const tbody = document.getElementById('table-body');
         const tr = document.createElement('tr');
-        
         tr.innerHTML = `
             <td><input type="text" placeholder="如 2330" value="${defaultName}"></td>
-            <td>
-                <select onchange="calc()">
-                    <option value="core" ${defaultCat==='core'?'selected':''}>核心 (大盤)</option>
-                    <option value="global" ${defaultCat==='global'?'selected':''}>全球 (VT/ACWI)</option>
-                    <option value="tech" ${defaultCat==='tech'?'selected':''}>科技 (0052/QQQ)</option>
-                    <option value="other" ${defaultCat==='other'?'selected':''}>其他 (個股/債券)</option>
-                </select>
-            </td>
+            <td><select onchange="calc()"><option value="core" ${defaultCat==='core'?'selected':''}>核心 (大盤)</option><option value="global" ${defaultCat==='global'?'selected':''}>全球 (VT)</option><option value="tech" ${defaultCat==='tech'?'selected':''}>科技 (0052)</option><option value="other" ${defaultCat==='other'?'selected':''}>其他 (個股)</option></select></td>
             <td><input type="number" class="cur-val" placeholder="0" oninput="calc()"></td>
             <td><input type="number" class="trade-val" placeholder="0" oninput="calc()"></td>
-            <td class="final-val">0</td>
-            <td><button class="btn-del" onclick="removeRow(this)">✕</button></td>
+            <td class="final-val" style="font-weight:bold; color:#6d597a;">0</td>
+            <td style="text-align:center;"><button class="btn-del" onclick="removeRow(this)">✕</button></td>
         `;
         tbody.appendChild(tr);
     }
 
-    function removeRow(btn) {
-        const row = btn.parentNode.parentNode;
-        row.parentNode.removeChild(row);
-        calc();
-    }
+    function removeRow(btn) { btn.parentNode.parentNode.remove(); calc(); }
 
     function calc() {
-        // 1. 歸零計數器
-        let totals = { core: 0, global: 0, tech: 0, other: 0 };
-        let grandTotal = 0;
-
-        // 2. 遍歷所有列
-        const rows = document.querySelectorAll('#table-body tr');
-        rows.forEach(row => {
-            const cat = row.querySelector('select').value;
-            const cur = parseFloat(row.querySelector('.cur-val').value) || 0;
-            const trade = parseFloat(row.querySelector('.trade-val').value) || 0;
-            
+        let totals = { core: 0, global: 0, tech: 0, other: 0 }, grandTotal = 0;
+        document.querySelectorAll('#table-body tr').forEach(row => {
+            const cat = row.querySelector('select').value, cur = parseFloat(row.querySelector('.cur-val').value) || 0, trade = parseFloat(row.querySelector('.trade-val').value) || 0;
             const final = cur + trade;
-            
-            // 更新該列的顯示
             row.querySelector('.final-val').innerText = final.toLocaleString();
-            
-            // 加總到對應類別
-            if (totals[cat] !== undefined) {
-                totals[cat] += final;
-            }
-            grandTotal += final;
+            totals[cat] += final; grandTotal += final;
         });
-
-        // 3. 更新總資產顯示
         document.getElementById('total-assets').innerText = "$ " + grandTotal.toLocaleString();
-
-        // 4. 更新儀表板卡片狀態
-        updateCard('core', totals.core, grandTotal);
-        updateCard('global', totals.global, grandTotal);
-        updateCard('tech', totals.tech, grandTotal);
-        updateCard('other', totals.other, grandTotal);
-
-        checkResult(); // 檢查問卷狀態
+        Object.keys(totals).forEach(type => updateCard(type, totals[type], grandTotal));
+        checkResult(); 
     }
 
     function updateCard(type, amount, total) {
-        const pct = total > 0 ? (amount / total * 100) : 0;
-        const rule = RULES[type];
-        
-        // DOM Elements
-        const card = document.getElementById(`card-${type}`);
-        const elPct = document.getElementById(`pct-${type}`);
-        const elAmt = document.getElementById(`amt-${type}`);
+        const pct = total > 0 ? (amount / total * 100) : 0, rule = RULES[type], card = document.getElementById(`card-${type}`);
+        document.getElementById(`pct-${type}`).innerText = pct.toFixed(1) + "%";
+        document.getElementById(`amt-${type}`).innerText = "$ " + amount.toLocaleString();
         const elStatus = document.getElementById(`status-${type}`);
-
-        // Update Text
-        elPct.innerText = pct.toFixed(1) + "%";
-        elAmt.innerText = "$ " + amount.toLocaleString();
-        
-        // Determine Status Color
-        card.className = "card"; // reset
-        if (pct > rule.max) {
-            card.classList.add('over');
-            elStatus.innerText = `⚠️ 過重 (上限 ${rule.max}%)`;
-            elStatus.style.color = "#c0392b";
-        } else if (pct < rule.min) {
-            card.classList.add('under');
-            elStatus.innerText = `💡 過輕 (下限 ${rule.min}%)`;
-            elStatus.style.color = "#d35400";
-        } else {
-            card.classList.add('good');
-            elStatus.innerText = "✅ 比例完美";
-            elStatus.style.color = "#27ae60";
-        }
+        card.className = "card"; 
+        if (pct > rule.max) { card.classList.add('over'); elStatus.innerText = `⚠️ 過重 (上限 ${rule.max}%)`; }
+        else if (pct < rule.min) { card.classList.add('under'); elStatus.innerText = `💡 過輕 (下限 ${rule.min}%)`; }
+        else { card.classList.add('good'); elStatus.innerText = "✅ 比例完美"; }
     }
 
     function startCheck() {
-        const grandTotal = parseFloat(document.getElementById('total-assets').innerText.replace(/[$,]/g, '')) || 0;
-        if (grandTotal === 0) {
-            alert("請先輸入資產數據！");
-            return;
-        }
+        if (parseFloat(document.getElementById('total-assets').innerText.replace(/[$,]/g, '')) === 0) { alert("請先輸入資產數據！"); return; }
         document.getElementById('quiz-section').style.display = 'block';
-        // Scroll to bottom
-        setTimeout(() => {
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-        }, 100);
+        setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100);
     }
 
     function checkResult() {
-        // 只有當問卷區顯示時才檢查結果
         if (document.getElementById('quiz-section').style.display === 'none') return;
-
-        const q1 = document.querySelector('input[name="q1"]:checked')?.value;
-        const q2 = document.querySelector('input[name="q2"]:checked')?.value;
-        const q3 = document.querySelector('input[name="q3"]:checked')?.value;
-        
-        const resDiv = document.getElementById('final-result');
-        const msgDiv = document.getElementById('result-msg');
-
+        const q1 = document.querySelector('input[name="q1"]:checked')?.value, q2 = document.querySelector('input[name="q2"]:checked')?.value, q3 = document.querySelector('input[name="q3"]:checked')?.value;
+        const resDiv = document.getElementById('final-result'), msgDiv = document.getElementById('result-msg');
         if (q1 && q2 && q3) {
             resDiv.style.display = 'block';
-            if (q1 === 'stop' || q2 === 'stop' || q3 === 'stop') {
-                resDiv.className = 'res-stop';
-                msgDiv.innerHTML = "🛑 警告：你的心態或風險承受度不符合標準，請<b>停止交易</b>並冷靜思考。";
-            } else {
-                resDiv.className = 'res-go';
-                msgDiv.innerHTML = "✅ 通過：配置符合紀律且心態正確，<b>可以執行交易</b>。";
-            }
-        } else {
-            resDiv.style.display = 'none';
-        }
+            if ([q1, q2, q3].includes('stop')) { resDiv.className = 'res-stop'; msgDiv.innerHTML = "🛑 緩緩吧：心態或風險承受度亮紅燈，請先暫停交易。"; }
+            else { resDiv.className = 'res-go'; msgDiv.innerHTML = "✅ 通過：配置理性且心態平穩，可以執行交易。"; }
+        } else { resDiv.style.display = 'none'; }
     }
 </script>
 
