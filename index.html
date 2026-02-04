@@ -20,7 +20,7 @@
             --deep-text: #6d597a; 
         }
 
-        /* 強制全域粗體與字體 */
+        /* 全域粗體 */
         * {
             font-family: var(--font-main) !important;
             font-weight: 700 !important;
@@ -37,7 +37,13 @@
             box-shadow: 0 10px 30px rgba(157, 129, 137, 0.1); 
         }
 
-        h1 { text-align: center; color: var(--deep-text); font-size: 2.2em; margin-bottom: 30px; letter-spacing: 2px; }
+        h1 { text-align: center; color: var(--deep-text); font-size: 2.2em; margin-bottom: 20px; letter-spacing: 2px; }
+
+        /* 防呆提示列 */
+        #target-sum-bar {
+            text-align: center; margin-bottom: 15px; padding: 8px;
+            background: #fff; border-radius: 10px; font-size: 0.9em;
+        }
 
         .header-info {
             background-color: var(--soft-pink) !important;
@@ -78,7 +84,6 @@
         th { background-color: var(--table-head) !important; padding: 15px; color: var(--primary); }
         td { padding: 12px 15px; border-bottom: 1px solid #f8f7f5; }
 
-        /* 心理檢查 2:8 比例 */
         #quiz-section { margin-top: 40px; border-top: 2px dashed var(--border); padding-top: 30px; display: none; }
         .q-item { margin-bottom: 25px; }
         .q-item p { margin-bottom: 12px; font-size: 1.1em; color: var(--deep-text); }
@@ -88,7 +93,7 @@
             background: #fdfcfb; border: 1px solid #f0edee; border-radius: 15px; cursor: pointer;
             transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
         }
-        .option-label:hover { background: #fff; border-color: var(--main-btn); box-shadow: 0 6px 12px rgba(0,0,0,0.05); }
+        .option-label:hover { background: #fff; border-color: var(--main-btn); }
         
         .option-label input[type="radio"] {
             flex: 0 0 20% !important; transform: scale(1.5); accent-color: var(--main-btn); margin: 0 !important;
@@ -100,8 +105,9 @@
         .btn-main {
             width: 100%; padding: 18px; background-color: var(--main-btn) !important; color: #fff !important;
             border: none; border-radius: 15px; font-size: 1.2em; cursor: pointer; margin-top: 30px;
-            box-shadow: 0 4px 15px rgba(181, 131, 141, 0.3);
+            box-shadow: 0 4px 15px rgba(181, 131, 141, 0.3); transition: all 0.3s;
         }
+        .btn-main:disabled { background-color: #ccc !important; cursor: not-allowed; box-shadow: none; }
 
         #final-result { padding: 25px; border-radius: 15px; margin-top: 25px; text-align: center; display: none; font-size: 1.1em; }
         .res-stop { background: #fae1dd; color: #b56576; border: 1px solid #e5989b; }
@@ -112,6 +118,11 @@
 
 <div class="container">
     <h1>長期投資過濾器</h1>
+
+    <div id="target-sum-bar">
+        目標佔比加總：<span id="target-sum-val">0</span>% 
+        <span id="target-warning" style="color: #e5989b; margin-left: 10px; display: none;">⚠️ 總和必須等於 100%</span>
+    </div>
 
     <div class="header-info">
         <div>
@@ -169,7 +180,7 @@
     
     <button style="width:100%; padding:12px; margin-top:15px; background:none; border:2px dashed var(--border); border-radius:12px; cursor:pointer; color:#9d8189;" onclick="addRow()">+ 新增投資項目</button>
 
-    <button class="btn-main" onclick="showQuiz()">配置完成，進入心理檢查</button>
+    <button class="btn-main" id="quiz-btn" onclick="showQuiz()">配置完成，進入心理檢查</button>
 
     <div id="quiz-section">
         <h3 style="color:var(--deep-text); margin-bottom:25px;">最後一步：決策品質檢查</h3>
@@ -223,6 +234,31 @@
     }
 
     function calc() {
+        // --- 目標佔比 100% 防呆邏輯 ---
+        const tCore = parseFloat(document.getElementById('target-core').value) || 0;
+        const tGlobal = parseFloat(document.getElementById('target-global').value) || 0;
+        const tTech = parseFloat(document.getElementById('target-tech').value) || 0;
+        const tOther = parseFloat(document.getElementById('target-other').value) || 0;
+        const targetSum = tCore + tGlobal + tTech + tOther;
+
+        const sumValEl = document.getElementById('target-sum-val');
+        const warnEl = document.getElementById('target-warning');
+        const quizBtn = document.getElementById('quiz-btn');
+
+        sumValEl.innerText = targetSum;
+        if (targetSum !== 100) {
+            sumValEl.style.color = '#e5989b';
+            warnEl.style.display = 'inline';
+            quizBtn.disabled = true;
+            quizBtn.innerText = '⚠️ 目標比例總和需為 100%';
+        } else {
+            sumValEl.style.color = 'var(--status-good)';
+            warnEl.style.display = 'none';
+            quizBtn.disabled = false;
+            quizBtn.innerText = '配置完成，進入心理檢查';
+        }
+
+        // --- 資產計算邏輯 ---
         let totals = { core: 0, global: 0, tech: 0, other: 0 }, grandTotal = 0;
         document.querySelectorAll('#table-body tr').forEach(row => {
             const cat = row.querySelector('select').value;
@@ -233,7 +269,9 @@
             row.querySelector('.row-twd').innerText = Math.round(rowTWD).toLocaleString();
             totals[cat] += rowTWD; grandTotal += rowTWD;
         });
+
         document.getElementById('total-assets').innerText = "$ " + Math.round(grandTotal).toLocaleString();
+
         ['core', 'global', 'tech', 'other'].forEach(cat => {
             const pct = grandTotal > 0 ? (totals[cat] / grandTotal * 100) : 0;
             const target = parseFloat(document.getElementById('target-' + cat).value) || 0;
