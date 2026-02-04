@@ -5,19 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>長期投資過濾器</title>
     <style>
-        @font-face {
-            font-family: 'jf-openhuninn';
-            src: url('https://cdn.jsdelivr.net/gh/justfont/open-huninn-font@master/font/jf-openhuninn-1.1/jf-openhuninn-1.1.ttf') format('truetype');
+        :root {
+            --font-main: "Microsoft Yahei", "微软雅黑", "STXihei", sans-serif;
+            --primary: #5f6c7b; 
+            --bg: #f4f1ea; 
+            --container-bg: #ffffff;
+            --main-btn: #b5838d; 
+            --status-over: #e5989b; 
+            --status-under: #ffb4a2; 
+            --status-good: #a8dadc; 
+            --table-head: #f2e9e4; 
+            --border: #e0deda;
+            --soft-pink: #f7d9da; 
+            --deep-text: #6d597a; 
         }
 
-        :root {
-            --primary: #5f6c7b; --bg: #f4f1ea; --container-bg: #ffffff;
-            --main-btn: #9d8189; --status-over: #e5989b; --status-under: #e6b8a2; --status-good: #84a59d;
-            --table-head: #e8e4dc; --border: #e0deda;
+        /* 強制全域粗體與字體 */
+        * {
+            font-family: var(--font-main) !important;
+            font-weight: 700 !important;
         }
 
         body {
-            font-family: 'jf-openhuninn', "Microsoft JhengHei", sans-serif;
             background-color: var(--bg); color: var(--primary);
             margin: 0; padding: 25px 15px; line-height: 1.5;
         }
@@ -28,67 +37,73 @@
             box-shadow: 0 10px 30px rgba(157, 129, 137, 0.1); 
         }
 
-        h1 { text-align: center; color: #6d597a; font-size: 2.2em; margin-bottom: 30px; letter-spacing: 2px; }
+        h1 { text-align: center; color: var(--deep-text); font-size: 2.2em; margin-bottom: 30px; letter-spacing: 2px; }
 
         .header-info {
-            background: #6d6875; color: #fff; padding: 20px; border-radius: 15px;
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;
+            background-color: var(--soft-pink) !important;
+            color: var(--deep-text) !important;
+            padding: 22px; border-radius: 20px;
+            display: flex; justify-content: space-between; align-items: center; 
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(109, 89, 122, 0.1);
         }
-        .fx-tag { background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 50px; font-size: 0.85em; }
+
+        .fx-tag { background: rgba(255,255,255,0.7); padding: 4px 12px; border-radius: 50px; font-size: 0.85em; }
 
         .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        
         .card { 
             padding: 20px; border-radius: 20px; border: none; 
-            background: #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.02);
+            background: #fff !important;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.02);
             border-top: 6px solid #ccc; transition: all 0.3s ease;
         }
-        .card.over { border-top-color: var(--status-over); background: #fffafb; }
-        .card.under { border-top-color: var(--status-under); background: #fffcfb; }
-        .card.good { border-top-color: var(--status-good); background: #f9fbf9; }
+        .card.over { border-top-color: var(--status-over) !important; }
+        .card.under { border-top-color: var(--status-under) !important; }
+        .card.good { border-top-color: var(--status-good) !important; }
 
-        .card h4 { margin: 0 0 10px 0; color: #6d597a; font-size: 1.1em; display: flex; justify-content: space-between; align-items: center; }
+        .card h4 { margin: 0 0 10px 0; color: var(--deep-text); font-size: 1em; display: flex; justify-content: space-between; align-items: center; }
+        
         .target-input { 
-            width: 50px; border: none; background: #f0edee; border-radius: 6px; 
-            padding: 3px; text-align: center; font-family: inherit; font-weight: bold; color: #9d8189;
+            width: 35px !important; height: 22px;
+            border: 1px solid var(--border) !important;
+            background: #fdfcfb !important;
+            border-radius: 6px; 
+            padding: 2px; text-align: center; font-size: 0.8em !important;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
         }
 
         .table-container { margin-top: 15px; border-radius: 15px; overflow: hidden; border: 1px solid var(--border); }
-        table { width: 100%; border-collapse: collapse; background: #fff; font-size: 0.95em; }
-        th { background: var(--table-head); padding: 15px; color: #7d6e6e; font-weight: 600; }
+        table { width: 100%; border-collapse: collapse; background: #fff; }
+        th { background-color: var(--table-head) !important; padding: 15px; color: var(--primary); }
         td { padding: 12px 15px; border-bottom: 1px solid #f8f7f5; }
-        
-        input[type="number"], input[type="text"], select {
-            padding: 8px; border: 1px solid #eee; border-radius: 8px; background: #fafafa;
-            font-family: inherit; font-size: 0.95em; color: var(--primary);
-        }
 
-        /* 心理檢查 2:8 比例區塊 */
-        #quiz-section { margin-top: 40px; border-top: 2px dashed var(--border); padding-top: 30px; }
+        /* 心理檢查 2:8 比例 */
+        #quiz-section { margin-top: 40px; border-top: 2px dashed var(--border); padding-top: 30px; display: none; }
         .q-item { margin-bottom: 25px; }
-        .q-item p { font-weight: bold; margin-bottom: 12px; font-size: 1.05em; color: #6d597a; }
+        .q-item p { margin-bottom: 12px; font-size: 1.1em; color: var(--deep-text); }
         
         .option-label {
             display: flex; align-items: center; padding: 18px; margin-bottom: 10px;
             background: #fdfcfb; border: 1px solid #f0edee; border-radius: 15px; cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
         }
-        .option-label:hover { background: #fff; border-color: var(--main-btn); }
+        .option-label:hover { background: #fff; border-color: var(--main-btn); box-shadow: 0 6px 12px rgba(0,0,0,0.05); }
         
-        /* 嚴格執行 2:8 比例 */
         .option-label input[type="radio"] {
             flex: 0 0 20% !important; transform: scale(1.5); accent-color: var(--main-btn); margin: 0 !important;
         }
         .option-label span {
-            flex: 0 0 80% !important; padding-left: 15px; font-size: 1.05em; font-weight: 500; line-height: 1.5;
+            flex: 0 0 80% !important; padding-left: 15px; font-size: 1.1em; line-height: 1.5;
         }
 
         .btn-main {
-            width: 100%; padding: 18px; background: var(--main-btn); color: #fff;
-            border: none; border-radius: 15px; font-size: 1.2em; font-weight: bold;
-            cursor: pointer; margin-top: 30px;
+            width: 100%; padding: 18px; background-color: var(--main-btn) !important; color: #fff !important;
+            border: none; border-radius: 15px; font-size: 1.2em; cursor: pointer; margin-top: 30px;
+            box-shadow: 0 4px 15px rgba(181, 131, 141, 0.3);
         }
 
-        #final-result { padding: 25px; border-radius: 15px; margin-top: 25px; font-weight: bold; text-align: center; display: none; font-size: 1.1em; }
+        #final-result { padding: 25px; border-radius: 15px; margin-top: 25px; text-align: center; display: none; font-size: 1.1em; }
         .res-stop { background: #fae1dd; color: #b56576; border: 1px solid #e5989b; }
         .res-go { background: #e6f2ee; color: #4a7c59; border: 1px solid #84a59d; }
     </style>
@@ -105,34 +120,34 @@
         </div>
         <div style="text-align: right;">
             <span style="font-size: 0.85em; opacity: 0.9;">預估總資產 (台幣)</span><br>
-            <span id="total-assets" style="font-size: 1.6em; font-weight: bold;">$ 0</span>
+            <span id="total-assets" style="font-size: 1.6em;">$ 0</span>
         </div>
     </div>
 
     <div class="dashboard">
         <div class="card" id="card-core">
-            <h4>核心 <span><input type="number" id="target-core" class="target-input" value="45" oninput="calc()"> %</span></h4>
-            <div id="pct-core" style="font-size: 1.8em; font-weight: bold;">0%</div>
-            <div id="amt-core" style="font-size: 0.9em; opacity: 0.7;">$0</div>
-            <div id="status-core" style="margin-top: 8px; font-size: 0.85em; font-weight: bold;">--</div>
+            <h4>核心 <span style="display:flex; align-items:center;"><input type="number" id="target-core" class="target-input" value="45" oninput="calc()">%</span></h4>
+            <div id="pct-core" style="font-size: 1.8em;">0%</div>
+            <div id="amt-core" style="font-size: 0.85em; opacity: 0.7;">NT$ 0</div>
+            <div id="status-core" style="margin-top: 8px; font-size: 0.85em;">--</div>
         </div>
         <div class="card" id="card-global">
-            <h4>全球 <span><input type="number" id="target-global" class="target-input" value="30" oninput="calc()"> %</span></h4>
-            <div id="pct-global" style="font-size: 1.8em; font-weight: bold;">0%</div>
-            <div id="amt-global" style="font-size: 0.9em; opacity: 0.7;">$0</div>
-            <div id="status-global" style="margin-top: 8px; font-size: 0.85em; font-weight: bold;">--</div>
+            <h4>全球 <span style="display:flex; align-items:center;"><input type="number" id="target-global" class="target-input" value="30" oninput="calc()">%</span></h4>
+            <div id="pct-global" style="font-size: 1.8em;">0%</div>
+            <div id="amt-global" style="font-size: 0.85em; opacity: 0.7;">NT$ 0</div>
+            <div id="status-global" style="margin-top: 8px; font-size: 0.85em;">--</div>
         </div>
         <div class="card" id="card-tech">
-            <h4>科技 <span><input type="number" id="target-tech" class="target-input" value="20" oninput="calc()"> %</span></h4>
-            <div id="pct-tech" style="font-size: 1.8em; font-weight: bold;">0%</div>
-            <div id="amt-tech" style="font-size: 0.9em; opacity: 0.7;">$0</div>
-            <div id="status-tech" style="margin-top: 8px; font-size: 0.85em; font-weight: bold;">--</div>
+            <h4>科技 <span style="display:flex; align-items:center;"><input type="number" id="target-tech" class="target-input" value="20" oninput="calc()">%</span></h4>
+            <div id="pct-tech" style="font-size: 1.8em;">0%</div>
+            <div id="amt-tech" style="font-size: 0.85em; opacity: 0.7;">NT$ 0</div>
+            <div id="status-tech" style="margin-top: 8px; font-size: 0.85em;">--</div>
         </div>
         <div class="card" id="card-other">
-            <h4>其他 <span><input type="number" id="target-other" class="target-input" value="5" oninput="calc()"> %</span></h4>
-            <div id="pct-other" style="font-size: 1.8em; font-weight: bold;">0%</div>
-            <div id="amt-other" style="font-size: 0.9em; opacity: 0.7;">$0</div>
-            <div id="status-other" style="margin-top: 8px; font-size: 0.85em; font-weight: bold;">--</div>
+            <h4>其他 <span style="display:flex; align-items:center;"><input type="number" id="target-other" class="target-input" value="5" oninput="calc()">%</span></h4>
+            <div id="pct-other" style="font-size: 1.8em;">0%</div>
+            <div id="amt-other" style="font-size: 0.85em; opacity: 0.7;">NT$ 0</div>
+            <div id="status-other" style="margin-top: 8px; font-size: 0.85em;">--</div>
         </div>
     </div>
 
@@ -144,7 +159,7 @@
                     <th>資產類別</th>
                     <th>計價幣別</th>
                     <th>目前庫存</th>
-                    <th>欲交易金額 (+/-)</th>
+                    <th>欲交易金額</th>
                     <th>折合台幣</th>
                 </tr>
             </thead>
@@ -152,47 +167,26 @@
         </table>
     </div>
     
-    <button style="width:100%; padding:12px; margin-top:15px; background:none; border:2px dashed var(--border); border-radius:12px; cursor:pointer; font-family:inherit; color:#9d8189; font-size:0.9em;" onclick="addRow()">+ 新增投資項目</button>
+    <button style="width:100%; padding:12px; margin-top:15px; background:none; border:2px dashed var(--border); border-radius:12px; cursor:pointer; color:#9d8189;" onclick="addRow()">+ 新增投資項目</button>
 
     <button class="btn-main" onclick="showQuiz()">配置完成，進入心理檢查</button>
 
-    <div id="quiz-section" style="display:none;">
-        <h3 style="color:#6d597a; margin-bottom:25px; font-size:1.3em;">最後一步：決策品質檢查</h3>
-        
+    <div id="quiz-section">
+        <h3 style="color:var(--deep-text); margin-bottom:25px;">最後一步：決策品質檢查</h3>
         <div class="q-item">
             <p>1. 這個交易動作的主要動機是？</p>
-            <label class="option-label">
-                <input type="radio" name="q1" value="pass" onchange="checkResult()">
-                <span>為了讓資產比例回到目標區間 (再平衡)</span>
-            </label>
-            <label class="option-label">
-                <input type="radio" name="q1" value="stop" onchange="checkResult()">
-                <span>覺得某支股票要漲了想追，或是跌了想砍 (情緒)</span>
-            </label>
+            <label class="option-label"><input type="radio" name="q1" value="pass" onchange="checkResult()"><span>為了讓資產比例回到目標區間 (再平衡)</span></label>
+            <label class="option-label"><input type="radio" name="q1" value="stop" onchange="checkResult()"><span>覺得某支股票要漲了想追，或是跌了想砍 (情緒)</span></label>
         </div>
-
         <div class="q-item">
             <p>2. 壓力測試：如果交易後明天跌 30%...</p>
-            <label class="option-label">
-                <input type="radio" name="q2" value="pass" onchange="checkResult()">
-                <span>我還能睡得著，生活不受影響</span>
-            </label>
-            <label class="option-label">
-                <input type="radio" name="q2" value="stop" onchange="checkResult()">
-                <span>我會非常焦慮，甚至想停損</span>
-            </label>
+            <label class="option-label"><input type="radio" name="q2" value="pass" onchange="checkResult()"><span>我還能睡得著，生活不受影響</span></label>
+            <label class="option-label"><input type="radio" name="q2" value="stop" onchange="checkResult()"><span>我會非常焦慮，甚至想停損</span></label>
         </div>
-
         <div class="q-item">
             <p>3. 這些錢的閒置時間？</p>
-            <label class="option-label">
-                <input type="radio" name="q3" value="pass" onchange="checkResult()">
-                <span>10 年以上不會用到</span>
-            </label>
-            <label class="option-label">
-                <input type="radio" name="q3" value="stop" onchange="checkResult()">
-                <span>1-2 年內可能會拿來用</span>
-            </label>
+            <label class="option-label"><input type="radio" name="q3" value="pass" onchange="checkResult()"><span>10 年以上不會用到</span></label>
+            <label class="option-label"><input type="radio" name="q3" value="stop" onchange="checkResult()"><span>1-2 年內可能會拿來用</span></label>
         </div>
     </div>
 
@@ -223,7 +217,7 @@
             <td><select class="currency" onchange="calc()"><option value="TWD">台幣</option><option value="USD">美金</option></select></td>
             <td><input type="number" class="cur-val" value="0" oninput="calc()"></td>
             <td><input type="number" class="trade-val" value="0" oninput="calc()"></td>
-            <td class="row-twd" style="font-weight:bold; color:#6d597a;">0</td>
+            <td class="row-twd" style="color:var(--deep-text);">0</td>
         `;
         tbody.appendChild(tr);
     }
@@ -239,9 +233,7 @@
             row.querySelector('.row-twd').innerText = Math.round(rowTWD).toLocaleString();
             totals[cat] += rowTWD; grandTotal += rowTWD;
         });
-
         document.getElementById('total-assets').innerText = "$ " + Math.round(grandTotal).toLocaleString();
-
         ['core', 'global', 'tech', 'other'].forEach(cat => {
             const pct = grandTotal > 0 ? (totals[cat] / grandTotal * 100) : 0;
             const target = parseFloat(document.getElementById('target-' + cat).value) || 0;
@@ -249,10 +241,8 @@
             document.getElementById('amt-' + cat).innerText = "NT$ " + Math.round(totals[cat]).toLocaleString();
             const card = document.getElementById('card-' + cat);
             const statusEl = document.getElementById('status-' + cat);
-            card.className = "card";
-            if (pct > target + 5) { statusEl.innerText = "⚠️ 比例過重"; card.classList.add('over'); }
-            else if (pct < target - 5) { statusEl.innerText = "💡 建議加碼"; card.classList.add('under'); }
-            else { statusEl.innerText = "✅ 理想狀態"; card.classList.add('good'); }
+            card.className = "card " + (pct > target + 5 ? "over" : pct < target - 5 ? "under" : "good");
+            statusEl.innerText = pct > target + 5 ? "⚠️ 比例過重" : pct < target - 5 ? "💡 建議加碼" : "✅ 理想狀態";
         });
         checkResult();
     }
@@ -264,12 +254,10 @@
 
     function checkResult() {
         if (document.getElementById('quiz-section').style.display === 'none') return;
-        
         const q1 = document.querySelector('input[name="q1"]:checked')?.value;
         const q2 = document.querySelector('input[name="q2"]:checked')?.value;
         const q3 = document.querySelector('input[name="q3"]:checked')?.value;
         const res = document.getElementById('final-result');
-
         if (q1 && q2 && q3) {
             res.style.display = 'block';
             if ([q1, q2, q3].includes('stop')) {
@@ -279,8 +267,6 @@
                 res.className = 'res-go';
                 res.innerText = '✅ 通過：配置理性且心態平穩，可以執行交易。';
             }
-        } else {
-            res.style.display = 'none';
         }
     }
 
