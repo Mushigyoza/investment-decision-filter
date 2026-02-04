@@ -114,7 +114,7 @@
             margin-top: 40px; font-weight: bold; font-family: inherit;
         }
 
-        /* --- 2:8 比例優化區塊 --- */
+        /* --- 2:8 比例優化區塊 (已更新) --- */
         #quiz-section { 
             display: none; margin-top: 50px; 
             border-top: 2px dashed var(--border); padding-top: 30px; 
@@ -135,18 +135,19 @@
         }
         .option-label:hover { background: #fff; border-color: var(--main-btn); }
         
-        /* 比例分配：左側圓圈佔 20%，右側文字佔 80% */
+        /* 比例分配：左側圓圈強佔 20%，右側文字強佔 80% */
         .option-label input[type="radio"] {
-            flex: 2; /* 比例 2 */
+            flex: 0 0 20%; 
             transform: scale(1.6);
             margin: 0;
             cursor: pointer;
             accent-color: var(--main-btn);
         }
         .option-label span {
-            flex: 8; /* 比例 8 */
+            flex: 0 0 80%;
             padding-left: 10px;
             font-weight: 500;
+            line-height: 1.4;
         }
 
         #final-result {
@@ -257,7 +258,6 @@
 </div>
 
 <script>
-    // JS 邏輯維持不變
     const RULES = { core: { min: 40, max: 50 }, global: { min: 25, max: 35 }, tech: { min: 15, max: 25 }, other: { min: 0, max: 10 } };
     window.onload = function() { addRow('006208', 'core'); addRow('VT', 'global'); };
 
